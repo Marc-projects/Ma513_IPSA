@@ -72,6 +72,6 @@ def create_model(models_names):
         tokenizer.save_pretrained('./save_'+model_name) # sauvegarde du tokenizer
 
 
-models_names = ["bert-base-uncased", "google-bert/bert-large-uncased", "google-bert/bert-base-cased", "google-bert/bert-large-cased"]   # liste des modèles à créer
+models_names = ["bert-base-uncased", "google-bert/bert-large-uncased", "google-bert/bert-base-cased", "google-bert/bert-large-cased", "jackaduma/SecBERT"]   # liste des modèles à créer
 
 create_model(models_names)

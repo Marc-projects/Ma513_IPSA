@@ -107,7 +107,7 @@ def mean_multi_prediction_finale(multi_pred):
     return pred_croise
     
 
-models_saves_names = ["./save_google-bert/bert-large-uncased", "./SEC_BERT_50_epochs", "./save_bert-base-uncased", "./save_google-bert/bert-base-cased"]    # liste des modeles pré-entrainé et adapaté à nos besoins
+models_saves_names = ["./save_google-bert/bert-large-uncased", "./SEC_BERT_50_epochs", "./save_bert-base-uncased", "./save_google-bert/bert-base-cased", "./save_jackaduma/SecBERT"]    # liste des modeles pré-entrainé et adapaté à nos besoins
 
 multi_pred_val, multi_pred_test, ner_tags_val, data_test = multi_prediction_finale(models_saves_names)
 
