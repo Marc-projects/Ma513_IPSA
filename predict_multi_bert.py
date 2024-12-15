@@ -22,9 +22,9 @@ dic_tag_inv = {0 : 'O', 1 : 'B-Entity', 2 : 'B-Action', 3 : 'I-Action', 4 : 'I-E
 def prepa_data_pred(file, tokenizer, labels = False):
     corpus = read_json(file)
     if labels:
-        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "ner_tags": [val["ner_tags"] for val in corpus]}
+        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "ner_tags": [val["ner_tags"] for val in corpus]}   # récupération des phrases et de leurs NER tags en remplacant les caractères problématiques
     else:
-        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "unique_id": [val["unique_id"] for val in corpus]}
+        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "unique_id": [val["unique_id"] for val in corpus]}   # récupération des phrases et de leurs NER tags en remplacant les caractères problématiques
     tokenized_inputs = tokenizer(data['tokens'], truncation=True, padding=True, is_split_into_words=True)
     isLabels = []
     for i in range(len(data["tokens"])):
@@ -32,7 +32,7 @@ def prepa_data_pred(file, tokenizer, labels = False):
         isLabel = []
         for j in tokenized_inputs.word_ids(i):
             if (j != None) and (add != j):
-                isLabel.append(True)
+                isLabel.append(True)    # création d'une liste pour savoir s'il faut récupérer la prediction faites 
                 add = j
             else:
                 isLabel.append(False)
@@ -46,14 +46,14 @@ def prediction_finale(model, data, islabel):
     with torch.no_grad():
         outputs = model(**{key: torch.tensor(val) for key, val in data.items()})
     logits = outputs.logits
-    predictions = torch.argmax(logits, dim=-1)
+    predictions = torch.argmax(logits, dim=-1)  # prédiction avec pytorch
 
     pred_words = []
     for i in range(len(predictions)):
         pred = []
         for j in range(len(predictions[i])):
             if islabel[i][j]:
-                pred.append(replace(str(int(predictions[i][j])), dic_tag_inv))
+                pred.append(replace(str(int(predictions[i][j])), dic_tag_inv))  # récupération des predictions et conversion des tags en texte
         pred_words.append(pred)
     return pred_words
 
@@ -74,10 +74,10 @@ def multi_prediction_finale(models_saves_names):
         pred_val_flat = [item for sublist in pred_val_final for item in sublist]
         ner_tags_val_flat = [item for sublist in ner_tags_val for item in sublist]
         print(model_save)
-        print(classification_report(ner_tags_val_flat, pred_val_flat))
+        print(classification_report(ner_tags_val_flat, pred_val_flat))   # affichage des performances individuelles
 
-        multi_pred_val.append(pred_val_final)
-        multi_pred_test.append(pred_test_final)
+        multi_pred_val.append(pred_val_final)   # récupération des predictions
+        multi_pred_test.append(pred_test_final) # récupération des predictions
     return multi_pred_val, multi_pred_test, ner_tags_val, data_test
 
 def val_freq_high(liste):
@@ -87,7 +87,7 @@ def val_freq_high(liste):
             compteur[i] += 1
         else:
             compteur[i] = 1
-    high = max(compteur, key=compteur.get)
+    high = max(compteur, key=compteur.get)  # retourne la clé avec la plus grande valeur
     return high
 
 def mean_multi_prediction_finale(multi_pred):
@@ -103,11 +103,11 @@ def mean_multi_prediction_finale(multi_pred):
                 pred_croise[i][j].append(multi_pred[n][i][j])
     for i in range(len(pred_croise)):
         for j in range(len(pred_croise[i])):
-            pred_croise[i][j] = val_freq_high(pred_croise[i][j])
+            pred_croise[i][j] = val_freq_high(pred_croise[i][j])    # récupération de la prédiction avec le plus de fréquence
     return pred_croise
     
 
-models_saves_names = ["./save_google-bert/bert-large-uncased", "./SEC_BERT_50_epochs", "./save_bert-base-uncased", "./save_google-bert/bert-base-cased"]
+models_saves_names = ["./save_google-bert/bert-large-uncased", "./SEC_BERT_50_epochs", "./save_bert-base-uncased", "./save_google-bert/bert-base-cased"]    # liste des modeles pré-entrainé et adapaté à nos besoins
 
 multi_pred_val, multi_pred_test, ner_tags_val, data_test = multi_prediction_finale(models_saves_names)
 
