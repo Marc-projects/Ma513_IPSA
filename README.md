@@ -41,5 +41,5 @@ Il suffit d'écrire dans le fichier `models.csv` les noms des modèles pré-entr
 2. **Execution du script `model_BERT.py`** : 
 Ce script va automatiquement entrainer et enregistrer tous les modèles inscrits dans le fichier `models.csv`.
 
-3. **Execution du script `predict_multi_BERT.py`** : 
+3. **Exécution du script `predict_multi_BERT.py`** : 
 Ce code utilise les modèles précédemment entrainés pour faire des prédictions sur les validations data et sur les tests data. Pour les données de validation, il affiche d'un part le résultat du croisement des modèles, et d'autre part les performances individuelles.
