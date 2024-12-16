@@ -1,11 +1,31 @@
 # Ma513_IPSA
 
-Afin de faire fonctionner les programmes, il faut créer un dossier data contenant les 3 fichiers de data.
+1. **Entraînement des modèles BERT** : Utilisation de fichiers JSON contenant des données NER pour entraîner plusieurs modèles BERT.
+2. **Prédiction multi-modèles** : Pour chaque modèle entraîné, les prédictions sont effectuées sur des données de validation et de test. Les résultats de plusieurs modèles sont ensuite croisés pour obtenir une prédiction finale.
 
-Ensuite, il faut executer le programme "model_BERT.py" qui va adapter tous les modèles BERT listés.
+Les données utilisées sont au format JSON, et les résultats sont générés sous forme de fichiers JSONLines contenant les prédictions.
 
-Les fichiers des sauvegardes sont créés automatiquement et sont placés dans le même répetoire que les scripts.
+## Fonctionnement
 
-Afin d'effectuer les predictions, il faut lancer le script "predict_multi_bert.py" qui va afficher les performances individuelles de chaques modèle et faire une prédiction croisé pour une meilleure performance.
+### Entraînement des modèles
+- **Lecture des fichiers JSON** : Les fichiers `NER-TRAINING.jsonlines` et `NER-VALIDATION.jsonlines` sont lus pour extraire les tokens et les labels associés (ou les identifiants uniques pour les données de test).
+- **Tokenisation** : Chaque phrase est tokenisée à l'aide de BERT et des tags NER sont ajustés pour s'aligner avec les tokens créés.
+- **Entraînement** : Les modèles BERT sont entraînés sur les données d'entraînement et évalués sur les données de validation. Les modèles et les tokenizers sont ensuite sauvegardés dans un répertoire dédié.
 
-Le fichier de test est généré automatiquement.
+### Prédiction multi-modèles
+- **Chargement des modèles pré-entraînés** : Les modèles sauvegardés sont rechargés pour effectuer des prédictions sur les données de validation et de test.
+- **Prédictions** : Chaque modèle génère des prédictions pour les entités nommées sur les jeux de données de validation et de test. Les prédictions sont ensuite croisées pour obtenir la prédiction finale en choisissant le label le plus fréquent parmi les modèles.
+- **Évaluation** : Les performances des modèles sont évaluées à l'aide de la fonction `classification_report` de scikit-learn sur les données de validation.
+- **Sauvegarde des résultats** : Les résultats des prédictions croisées sont sauvegardés dans un fichier `NER-TESTING_bert_multi_pred1.jsonlines`.
+
+### CSV de gestion des modèles
+Les modèles BERT sont définis dans un fichier CSV `models.csv`. Ce fichier contient les noms des modèles BERT à utiliser pour l'entraînement et la prédiction. Exemple de contenu du fichier `models.csv` :
+
+```csv
+model_name
+google-bert/bert-large-uncased
+google-bert/bert-large-cased
+google-bert/bert-base-cased
+bert-base-uncased
+jackaduma/SecBERT
+```

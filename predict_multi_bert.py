@@ -5,6 +5,7 @@ from datasets import Dataset
 from transformers import BertTokenizerFast
 from transformers import BertForTokenClassification, Trainer, TrainingArguments
 import torch
+import csv
 
 def read_json(file):
     with open(file, 'r') as f:
@@ -16,6 +17,19 @@ def replace(mot, dic):
         mot = mot.replace(str(key), str(value))
     return mot
 
+def get_model_name(prediction = True):
+    liste = []
+    with open('models.csv', mode='r') as csvfile:
+        reader = csv.reader(csvfile)
+        header = next(reader)        
+        for row in reader:
+            if row != []:
+                if prediction:    
+                    liste.append('./save_'+row[0])
+                else:
+                    liste.append(row[0])
+    return liste
+
 dic_tag = {'O' : 0, 'B-Entity' : 1, 'B-Action' : 2, 'I-Action' : 3, 'I-Entity' : 4, 'B-Modifier' : 5, 'I-Modifier' : 6}
 dic_tag_inv = {0 : 'O', 1 : 'B-Entity', 2 : 'B-Action', 3 : 'I-Action', 4 : 'I-Entity', 5 : 'B-Modifier', 6 : 'I-Modifier'}
 
@@ -24,7 +38,7 @@ def prepa_data_pred(file, tokenizer, labels = False):
     if labels:
         data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "ner_tags": [val["ner_tags"] for val in corpus]}   # récupération des phrases et de leurs NER tags en remplacant les caractères problématiques
     else:
-        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "unique_id": [val["unique_id"] for val in corpus]}   # récupération des phrases et de leurs NER tags en remplacant les caractères problématiques
+        data = {"tokens": [[t if t != "\uf0b7" else "/uf0b7" for t in val["tokens"]] for val in corpus], "unique_id": [val["unique_id"] for val in corpus]}   # récupération des phrases et de leur ID (pour le fichier de test) en remplacant les caractères problématiques
     tokenized_inputs = tokenizer(data['tokens'], truncation=True, padding=True, is_split_into_words=True)
     isLabels = []
     for i in range(len(data["tokens"])):
@@ -32,7 +46,7 @@ def prepa_data_pred(file, tokenizer, labels = False):
         isLabel = []
         for j in tokenized_inputs.word_ids(i):
             if (j != None) and (add != j):
-                isLabel.append(True)    # création d'une liste pour savoir s'il faut récupérer la prediction faites 
+                isLabel.append(True)    # création d'une liste pour savoir s'il faut récupérer la prediction faites (pas de padding)
                 add = j
             else:
                 isLabel.append(False)
@@ -42,7 +56,7 @@ def prepa_data_pred(file, tokenizer, labels = False):
     else:
         return tokenized_inputs, isLabels, data
 
-def prediction_finale(model, data, islabel):
+def prediction_finale(model, data, islabel):    # fonction pour effectuer les prédictions finales avec un modèle
     with torch.no_grad():
         outputs = model(**{key: torch.tensor(val) for key, val in data.items()})
     logits = outputs.logits
@@ -52,7 +66,7 @@ def prediction_finale(model, data, islabel):
     for i in range(len(predictions)):
         pred = []
         for j in range(len(predictions[i])):
-            if islabel[i][j]:
+            if islabel[i][j]:   # récupération des prédictions sur les mots souhaités uniquement
                 pred.append(replace(str(int(predictions[i][j])), dic_tag_inv))  # récupération des predictions et conversion des tags en texte
         pred_words.append(pred)
     return pred_words
@@ -61,7 +75,7 @@ def multi_prediction_finale(models_saves_names):
     multi_pred_val = []
     multi_pred_test = []
     for model_save in models_saves_names:
-
+        # chargement d'un modèle et de son tokenizer sauvegardés
         model_reloaded = BertForTokenClassification.from_pretrained(model_save)
         tokenizer_reloaded = BertTokenizerFast.from_pretrained(model_save)
 
@@ -107,7 +121,7 @@ def mean_multi_prediction_finale(multi_pred):
     return pred_croise
     
 
-models_saves_names = ["./save_google-bert/bert-large-uncased", "./save_google-bert/bert-large-cased", "./save_bert-base-uncased", "./save_google-bert/bert-base-cased", "./save_jackaduma/SecBERT"]    # liste des modeles pré-entrainé et adapaté à nos besoins
+models_saves_names = get_model_name(prediction=True)    # liste des modeles pré-entrainé et adapaté à nos besoins
 
 multi_pred_val, multi_pred_test, ner_tags_val, data_test = multi_prediction_finale(models_saves_names)
 
@@ -124,6 +138,7 @@ print(classification_report(ner_tags_val_flat, pred_croise_val_flat))
 with open("NER-TESTING_bert_multi_pred1.jsonlines", "w") as json_file:
     pass
 
+# écriture des predictions dans le fichier de test
 for i in range(len(pred_croise_test)):
     with open("NER-TESTING_bert_multi_pred1.jsonlines", "a") as json_file:
         if len(data_test["tokens"][i]) == len(pred_croise_test[i]):
